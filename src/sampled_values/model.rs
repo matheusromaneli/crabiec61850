@@ -1,3 +1,4 @@
+#[repr(u8)]
 pub enum PDUTags {
     PDU = 0x60,
     NoAsdu = 0x80,
@@ -5,6 +6,7 @@ pub enum PDUTags {
     ASDU = 0x30,
 }
 
+#[repr(u8)]
 pub enum ASDUTags {
     SvId = 0x80,
     Dataset = 0x81,
@@ -17,6 +19,7 @@ pub enum ASDUTags {
     SmpMode = 0x88,
 }
 
+#[repr(u8)]
 #[derive(PartialEq, Debug)]
 pub enum SampleSync{
     /*
@@ -38,7 +41,7 @@ pub struct PhaseMeasurement {
 #[derive(PartialEq, Debug)]
 pub struct Asdu{
     pub sv_id: String,
-    pub dataset: String,
+    pub dataset: Option<String>,
     pub smp_count: u16,
     pub conf_rev: u32,
     pub refr_tm: Option<u64>,

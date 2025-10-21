@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ByteOrder};
-use crate::sampled_values::model::SampledValue;
+use crate::sampled_values::model::{Asdu, PDUTags, SampledValue};
 
 
 impl SampledValue {
@@ -12,6 +12,18 @@ impl SampledValue {
         else {
             number_of_asdu = BigEndian::read_u16(&bytes[12..14]);
         }
+        let mut asdus: Vec<Asdu> = vec![];
+        let mut asdu_start = (12 + len_asdu) as usize;
+        for _ in 0..number_of_asdu {
+            let asdu_tag = bytes[asdu_start];
+            if asdu_tag != PDUTags::ASDU as u8 {
+                panic!("ASDU tag is not 0x30 at offset {}", asdu_start);
+            }
+            let asdu_len = bytes[asdu_start + 1];
+            let asdu = Asdu::from_bytes(&bytes[asdu_start + 2..asdu_start + 2 + asdu_len as usize]);
+            asdus.push(asdu);
+            asdu_start += 2 + asdu_len as usize;
+        }
         SampledValue {
             app_id: BigEndian::read_u16(&bytes[0..2]),
             length: BigEndian::read_u16(&bytes[2..4]),
@@ -19,7 +31,7 @@ impl SampledValue {
             reserved1: [bytes[4], bytes[5]],
             reserved2: [bytes[6], bytes[7]],
             number_of_asdu: number_of_asdu,
-            asdu: vec![],
+            asdu: asdus,
         }
     }
 }
