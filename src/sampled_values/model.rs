@@ -37,6 +37,19 @@ pub struct PhaseMeasurement {
     pub quality: i32,
 }
 
+#[derive(PartialEq, Debug)]
+pub struct PhaseMeasures {
+    pub a: PhaseMeasurement,
+    pub b: PhaseMeasurement,
+    pub c: PhaseMeasurement,
+    pub n: PhaseMeasurement,
+}
+
+#[derive(PartialEq, Debug)]
+pub struct Phases {
+    pub current: PhaseMeasures,
+    pub voltage: PhaseMeasures,
+}
 
 #[derive(PartialEq, Debug)]
 pub struct Asdu{
@@ -47,7 +60,7 @@ pub struct Asdu{
     pub refr_tm: Option<u64>,
     pub smp_sync: SampleSync,
     pub smp_rate: Option<u16>,
-    pub measures: Vec<PhaseMeasurement>,
+    pub measures: Phases,
     pub smp_mode: Option<u16>,
 }
 

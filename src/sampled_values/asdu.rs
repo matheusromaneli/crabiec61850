@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ByteOrder};
-use crate::sampled_values::model::{Asdu, PhaseMeasurement, SampleSync};
+use crate::sampled_values::model::{Asdu, Phases, SampleSync};
 
 impl Asdu {
 
@@ -62,8 +62,7 @@ impl Asdu {
             Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
         }
 
-        // let measures = PhaseMeasurement::from_bytes(value);
-        let measures: Vec<PhaseMeasurement> = vec![];
+        let measures = Phases::from_bytes(value);
         Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
 
         let mut smp_mode: Option<u16> = None;
@@ -87,10 +86,12 @@ impl Asdu {
 
 #[cfg(test)]
 mod tests {
+    use crate::sampled_values::model::Phases;
+
     use super::*;
 
     #[test]
-    fn decode_asdu_no_phs_meas() {
+    fn decode_asdu() {
         let bytes: &[u8] = &[
             0x80, 0x04, 0x34, 0x30, 0x30, 0x30, 0x82, 0x02, 0x00, 0x00, 0x83, 0x04, 0x00, 0x00,
             0x00, 0x01, 0x85, 0x01, 0x01, 0x87, 0x40, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -108,7 +109,7 @@ mod tests {
             refr_tm: None,
             smp_sync: SampleSync::Local,
             smp_rate: None,
-            measures: vec![],
+            measures: Phases::from_bytes(&bytes[21..21+64]),
             smp_mode: None,
         };
 
