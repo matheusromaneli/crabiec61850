@@ -12,6 +12,13 @@ impl PhaseMeasurement{
             quality: BigEndian::read_i32(&bytes[4..8]),
         }
     }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes: Vec<u8> = vec![0; 8];
+        BigEndian::write_i32(&mut bytes[0..4], self.value);
+        BigEndian::write_i32(&mut bytes[4..8], self.quality);
+        bytes
+    }
 }
 
 impl PhaseMeasures {
@@ -26,6 +33,15 @@ impl PhaseMeasures {
             n: PhaseMeasurement::from_bytes(&bytes[24..32]),
         }
     }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes: Vec<u8> = vec![];
+        bytes.append(&mut self.a.to_bytes());
+        bytes.append(&mut self.b.to_bytes());
+        bytes.append(&mut self.c.to_bytes());
+        bytes.append(&mut self.n.to_bytes());
+        bytes
+    }
 }
 
 impl Phases {
@@ -37,6 +53,13 @@ impl Phases {
             current: PhaseMeasures::from_bytes(&bytes[0..32]),
             voltage: PhaseMeasures::from_bytes(&bytes[32..64]),
         }
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes: Vec<u8> = vec![];
+        bytes.append(&mut self.current.to_bytes());
+        bytes.append(&mut self.voltage.to_bytes());
+        bytes
     }
 }
 
@@ -105,5 +128,44 @@ mod tests {
         assert_eq!(phases.voltage.n.value, -10);
         assert_eq!(phases.voltage.n.quality, 0x00002000);
         
+    }
+
+    #[test]
+    fn phase_measurement_to_bytes() {
+        let phase_measurement = PhaseMeasurement { value: -3, quality: 0 };
+        let bytes = phase_measurement.to_bytes();
+        assert_eq!(bytes, vec![0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00]);
+    }
+
+    #[test]
+    fn phase_measures_to_bytes() {
+        let phase_measures = PhaseMeasures {
+            a: PhaseMeasurement{ value: 0, quality: 0},
+            b: PhaseMeasurement{ value: 0, quality: 0},
+            c: PhaseMeasurement{ value: 0, quality: 0},
+            n: PhaseMeasurement{ value: 0, quality: 0},
+        };
+        let bytes = phase_measures.to_bytes();
+        assert_eq!(bytes, vec![0; 32]);
+    }
+
+    #[test]
+    fn phases_to_bytes() {
+        let phases = Phases {
+            current: PhaseMeasures {
+                a: PhaseMeasurement{ value: 0, quality: 0},
+                b: PhaseMeasurement{ value: 0, quality: 0},
+                c: PhaseMeasurement{ value: 0, quality: 0},
+                n: PhaseMeasurement{ value: 0, quality: 0},
+            },
+            voltage: PhaseMeasures {
+                a: PhaseMeasurement{ value: 0, quality: 0},
+                b: PhaseMeasurement{ value: 0, quality: 0},
+                c: PhaseMeasurement{ value: 0, quality: 0},
+                n: PhaseMeasurement{ value: 0, quality: 0},
+            },
+        };
+        let bytes = phases.to_bytes();
+        assert_eq!(bytes, vec![0; 64]);
     }
 }

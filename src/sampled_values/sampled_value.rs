@@ -34,6 +34,23 @@ impl SampledValue {
             asdu: asdus,
         }
     }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes: Vec<u8> = vec![];
+        BigEndian::write_u16(&mut bytes, self.app_id);
+        BigEndian::write_u16(&mut bytes, self.length);
+        bytes.push((self.simulation as u8) << 3);
+        bytes.push(self.reserved1[0]);
+        bytes.push(self.reserved1[1]);
+        bytes.push(self.reserved2[0]);
+        bytes.push(self.reserved2[1]);
+        bytes.push(self.asdu.len() as u8);
+        for asdu in &self.asdu {
+            let mut asdu_bytes = asdu.to_bytes();
+            bytes.append(&mut asdu_bytes);
+        }
+        bytes
+    }
 }
 
 #[cfg(test)]

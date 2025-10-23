@@ -20,7 +20,7 @@ pub enum ASDUTags {
 }
 
 #[repr(u8)]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub enum SampleSync{
     /*
     Sampled values synchronization source.
