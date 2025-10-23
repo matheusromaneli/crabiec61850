@@ -4,16 +4,16 @@ use crate::sampled_values::model::{Asdu, PDUTags, SampledValue};
 
 impl SampledValue {
     pub fn from_bytes(bytes: &[u8]) -> SampledValue {
-        let len_asdu = bytes[11];
+        let no_asdu_len = bytes[11];
         let number_of_asdu: u16;
-        if len_asdu == 1 {
+        if no_asdu_len == 1 {
             number_of_asdu = bytes[12] as u16;
         }
         else {
             number_of_asdu = BigEndian::read_u16(&bytes[12..14]);
         }
         let mut asdus: Vec<Asdu> = vec![];
-        let mut asdu_start = (12 + len_asdu) as usize;
+        let mut asdu_start = (14 + no_asdu_len) as usize;
         for _ in 0..number_of_asdu {
             let asdu_tag = bytes[asdu_start];
             if asdu_tag != PDUTags::ASDU as u8 {
@@ -56,5 +56,29 @@ mod tests {
 
         let sampled_value = SampledValue::from_bytes(bytes);
         assert_eq!(expected, sampled_value);
+    }
+
+    #[test]
+    fn decode_1_asdu() {
+        let bytes: &[u8] = &[
+            0x40, 0x02, 0x00, 0x66, 0x00, 0x00, 0x00, 0x00, // Header
+            0x60, 0x5c, // PDU
+            0x80, 0x01, 0x01, // number of ASDU
+            0xa2, 0x57, // sequence of ASDU
+            0x30, 0x55, 0x80, 0x04, 0x34, 0x30, 0x30, 0x30, 0x82, 0x02, 0x00, 0x00, 0x83, 0x04, 0x00, 0x00, 0x00,
+            0x01, 0x85, 0x01, 0x01, 0x87, 0x40, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x03, 0x00, 0x00, 0x20, 0x00, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
+            0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
+            0xff, 0xf6, 0x00, 0x00, 0x20, 0x00 // ASDU
+        ];
+
+        let sampled_value = SampledValue::from_bytes(bytes);
+        assert_eq!(0x4002, sampled_value.app_id);
+        assert_eq!(102, sampled_value.length);
+        assert_eq!(false, sampled_value.simulation);
+        assert_eq!([0x00, 0x00], sampled_value.reserved1);
+        assert_eq!([0x00, 0x00], sampled_value.reserved2);
+        assert_eq!(1, sampled_value.number_of_asdu);
     }
 }
