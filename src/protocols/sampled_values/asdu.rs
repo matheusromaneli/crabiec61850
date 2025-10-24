@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ByteOrder};
-use crate::sampled_values::model::{ASDUTags, Asdu, Phases, SampleSync};
+use crate::protocols::sampled_values::model::{ASDUTags, Asdu, Phases, SampleSync};
 
 impl Asdu {
 
@@ -219,7 +219,7 @@ impl Asdu {
 
 #[cfg(test)]
 mod tests {
-    use crate::sampled_values::model::{PhaseMeasurement, PhaseMeasures, Phases};
+    use crate::protocols::sampled_values::model::{PhaseMeasurement, PhaseMeasures, Phases};
 
     use super::*;
 

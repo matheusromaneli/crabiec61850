@@ -1,6 +1,6 @@
 use byteorder::{BigEndian, ByteOrder};
 
-use crate::sampled_values::model::{PhaseMeasurement, PhaseMeasures, Phases};
+use crate::protocols::sampled_values::model::{PhaseMeasurement, PhaseMeasures, Phases};
 
 impl PhaseMeasurement{
     pub fn from_bytes(bytes: &[u8]) -> PhaseMeasurement {

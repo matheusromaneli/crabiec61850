@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ByteOrder};
-use crate::sampled_values::model::{Asdu, PDUTags, SampledValue};
+use crate::protocols::sampled_values::model::{Asdu, PDUTags, SampledValue};
 
 
 impl SampledValue {
