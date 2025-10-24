@@ -191,6 +191,30 @@ impl Asdu {
 
         bytes
     }
+
+    pub fn next(&mut self) {
+        let vol: f64 = 30.0;
+        let amp: f64 = 0.0;
+        let phase_angle: f64 = 0.0;
+
+        self.smp_count = (self.smp_count + 1) % 4800;
+
+        let sample_point: f64 = (self.smp_count % 80) as f64;
+
+        let angle_a: f64 = sample_point * (2 as f64 * std::f64::consts::PI / 80 as f64);
+        let angle_b: f64 = sample_point * (2 as f64 * std::f64::consts::PI / 80 as f64);
+        let angle_c: f64 = sample_point * (2 as f64 * std::f64::consts::PI / 80 as f64);
+
+        self.measures.current.a.value = (amp * (angle_a - phase_angle).sin() * 1000 as f64) as i32;
+        self.measures.current.b.value = (amp * (angle_b - phase_angle).sin() * 1000 as f64) as i32;
+        self.measures.current.c.value = (amp * (angle_c - phase_angle).sin() * 1000 as f64) as i32;
+        self.measures.current.n.value = self.measures.current.a.value + self.measures.current.b.value + self.measures.current.c.value;
+
+        self.measures.voltage.a.value = (vol * angle_a.sin() * 100 as f64) as i32;
+        self.measures.voltage.b.value = (vol * angle_b.sin() * 100 as f64) as i32;
+        self.measures.voltage.c.value = (vol * angle_c.sin() * 100 as f64) as i32;
+        self.measures.voltage.n.value = self.measures.voltage.a.value + self.measures.voltage.b.value + self.measures.voltage.c.value;
+    }
 }
 
 #[cfg(test)]
@@ -280,6 +304,61 @@ mod tests {
 
         let object = Asdu::from_bytes(bytes);
         assert_eq!(object.to_bytes(), bytes);
+    }
+
+    #[test]
+    fn next_asdu(){
+        let mut current_asdu = Asdu{
+            sv_id: "4000".to_string(),
+            dataset: None,
+            smp_count: 0,
+            conf_rev: 1,
+            refr_tm: None,
+            smp_sync: SampleSync::Local,
+            smp_rate: None,
+            measures: Phases {
+                current: PhaseMeasures {
+                    a: PhaseMeasurement{ value: 0, quality: 0},
+                    b: PhaseMeasurement{ value: 0, quality: 0},
+                    c: PhaseMeasurement{ value: 0, quality: 0},
+                    n: PhaseMeasurement{ value: 0, quality: 0},
+                },
+                voltage: PhaseMeasures {
+                    a: PhaseMeasurement{ value: 0, quality: 0},
+                    b: PhaseMeasurement{ value: 0, quality: 0},
+                    c: PhaseMeasurement{ value: 0, quality: 0},
+                    n: PhaseMeasurement{ value: 0, quality: 0},
+                },
+            },
+            smp_mode: None,
+        };
+
+        let expected_asdu_next = Asdu {
+            sv_id: "4000".to_string(),
+            dataset: None,
+            smp_count: 1,
+            conf_rev: 1,
+            refr_tm: None,
+            smp_sync: SampleSync::Local,
+            smp_rate: None,
+            measures: Phases {
+                current: PhaseMeasures {
+                    a: PhaseMeasurement{ value: 0, quality: 0},
+                    b: PhaseMeasurement{ value: 0, quality: 0},
+                    c: PhaseMeasurement{ value: 0, quality: 0},
+                    n: PhaseMeasurement{ value: 0, quality: 0},
+                },
+                voltage: PhaseMeasures {
+                    a: PhaseMeasurement{ value: 235, quality: 0},
+                    b: PhaseMeasurement{ value: 235, quality: 0},
+                    c: PhaseMeasurement{ value: 235, quality: 0},
+                    n: PhaseMeasurement{ value: 705, quality: 0},
+                },
+            },
+            smp_mode: None,
+        };
+        current_asdu.next();
+        assert_eq!(current_asdu, expected_asdu_next);
     }
 
 }

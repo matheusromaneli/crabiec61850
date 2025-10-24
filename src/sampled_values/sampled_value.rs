@@ -72,6 +72,12 @@ impl SampledValue {
 
         bytes
     }
+
+    pub fn next(&mut self){
+        for asdu in &mut self.asdu {
+            asdu.next();
+        }
+    }
 }
 
 #[cfg(test)]
