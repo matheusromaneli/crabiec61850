@@ -1,5 +1,5 @@
 use std::ffi::CString;
-use libc::{AF_PACKET, SO_BINDTODEVICE, SOCK_RAW, SOL_SOCKET, htons, recv, setsockopt, socket};
+use libc::{AF_PACKET, SO_BINDTODEVICE, SOCK_RAW, SOL_SOCKET, htons, recv, send, setsockopt, socket};
 
 pub struct RawSocket {
     pub sock: libc::c_int,
@@ -38,6 +38,13 @@ impl RawSocket {
             panic!("Error receiving packet: {}", std::io::Error::last_os_error());
         }
         buffer[..packet_size as usize].to_vec()
+    }
+
+    pub fn send(&self, data: Vec<u8>) {
+        let result = unsafe { send(self.sock, data.as_ptr() as *const libc::c_void, data.len(), 0) };
+        if result < 0 {
+            panic!("Error sending packet: {}", std::io::Error::last_os_error());
+        }
     }
 
 
