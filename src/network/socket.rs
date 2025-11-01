@@ -36,10 +36,8 @@ impl RawSocket {
         let packet_size = unsafe { recv(self.sock, buffer.as_mut_ptr() as *mut libc::c_void, buffer.len(), 0) };
         if packet_size < 0 {
             panic!("Error receiving packet: {}", std::io::Error::last_os_error());
-        } else {
-            println!("Received packet: {:02x?}", &buffer[0..packet_size as usize]);
         }
-        buffer.to_vec()
+        buffer[..packet_size as usize].to_vec()
     }
 
 
