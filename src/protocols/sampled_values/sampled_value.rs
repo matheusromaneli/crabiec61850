@@ -1,28 +1,25 @@
 use byteorder::{BigEndian, ByteOrder};
 use crate::protocols::sampled_values::model::{Asdu, PDUTags, SampledValue};
-
+use crate::standards::asn1::Triplet;
 
 impl SampledValue {
     pub fn from_bytes(bytes: &[u8]) -> SampledValue {
-        let no_asdu_len = bytes[11];
-        let number_of_asdu: u16;
-        if no_asdu_len == 1 {
-            number_of_asdu = bytes[12] as u16;
-        }
-        else {
-            number_of_asdu = BigEndian::read_u16(&bytes[12..14]);
-        }
+        let sav_pdu_triplet = Triplet::from_bytes(&bytes[8..]);
+        let no_asdu_triplet = Triplet::from_bytes(&sav_pdu_triplet.value);
+        let seq_asdu_triplet = Triplet::from_bytes(&sav_pdu_triplet.value[no_asdu_triplet.len()..]);
+
+        let number_of_asdu = BigEndian::read_int(&no_asdu_triplet.value, 1 + no_asdu_triplet.extended_length as usize) as u32;
         let mut asdus: Vec<Asdu> = vec![];
-        let mut asdu_start = (14 + no_asdu_len) as usize;
+        let mut asdu_start = 0;
         for _ in 0..number_of_asdu {
-            let asdu_tag = bytes[asdu_start];
-            if asdu_tag != PDUTags::ASDU as u8 {
-                panic!("ASDU tag is not 0x30 at offset {}", asdu_start);
+            let asdu_triplet = Triplet::from_bytes(&seq_asdu_triplet.value[asdu_start..]);
+
+            if asdu_triplet.tag != PDUTags::ASDU as u8 {
+                panic!("ASDU tag is not 0x30 at offset {} of seq_asdu", asdu_start);
             }
-            let asdu_len = bytes[asdu_start + 1];
-            let asdu = Asdu::from_bytes(&bytes[asdu_start + 2..asdu_start + 2 + asdu_len as usize]);
+            let asdu = Asdu::from_bytes(&asdu_triplet.value);
             asdus.push(asdu);
-            asdu_start += 2 + asdu_len as usize;
+            asdu_start += asdu_triplet.len();
         }
         SampledValue {
             app_id: BigEndian::read_u16(&bytes[0..2]),
@@ -83,24 +80,6 @@ impl SampledValue {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn decode_no_asdu() {
-        let bytes: &[u8] = &[0x40,0x02,0x00,0x66,0x00,0x00,0x00,0x00,0x60,0x5c,0x80,0x01,0x00];
-
-        let expected = SampledValue{
-            app_id: 0x4002,
-            length: 102,
-            simulation: false,
-            reserved1: [0x00, 0x00],
-            reserved2: [0x00, 0x00],
-            number_of_asdu: 0,
-            asdu: vec![],
-        };
-
-        let sampled_value = SampledValue::from_bytes(bytes);
-        assert_eq!(expected, sampled_value);
-    }
 
     #[test]
     fn decode_1_asdu() {

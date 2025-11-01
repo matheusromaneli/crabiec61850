@@ -72,6 +72,6 @@ pub struct SampledValue{
     pub simulation: bool,
     pub reserved1: [u8;2],
     pub reserved2: [u8;2],
-    pub number_of_asdu: u16,
+    pub number_of_asdu: u32,
     pub asdu: Vec<Asdu>
 }

@@ -1,73 +1,61 @@
 use byteorder::{BigEndian, ByteOrder};
-use crate::protocols::sampled_values::model::{ASDUTags, Asdu, Phases, SampleSync};
+use crate::{protocols::sampled_values::model::{ASDUTags, Asdu, Phases, SampleSync}, standards::asn1::Triplet};
 
 impl Asdu {
 
-    fn update<'a>(bytes: &'a [u8], _start: &mut usize, _tag: &mut u8, _len: &mut u8, _value: &mut &'a[u8]){
-        if *_start >= bytes.len() {
-            return;
-        }
-        *_tag = bytes[*_start];
-        *_len = bytes[*_start + 1];
-        let end = *_start + 2 + *_len as usize;
-        println!("start: {}, tag: {:x}, len: {}, end: {}", _start, _tag, _len, end);
-        if end < bytes.len() {
-            *_value = &bytes[*_start + 2..end];
-        }
-        else {
-            *_value = &bytes[*_start + 2..bytes.len()];
-        }
-        *_start = end;
-    }
-
     pub fn from_bytes(bytes: &[u8]) -> Asdu {
-        let mut start: usize = 0;
-        let mut tag: u8 = 0;
-        let mut len: u8 = 0;
-        let mut value: &[u8] = &[];
-        Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
+        let mut triplet = Triplet::from_bytes(bytes);
+        let mut start: usize = triplet.len();
+        let sv_id = String::from_utf8(triplet.value.to_vec()).unwrap();
 
-        let sv_id = String::from_utf8(value.to_vec()).unwrap();
-        Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
-
+        triplet = Triplet::from_bytes(&bytes[start..]);
+        start += triplet.len();
         let mut dataset: Option<String> = None;
-        if tag == 0x81 {
-            dataset = Some(String::from_utf8(value.to_vec()).unwrap());
-            Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
+        if triplet.tag == 0x81 {
+            dataset = Some(String::from_utf8(triplet.value.to_vec()).unwrap());
+            
+            triplet = Triplet::from_bytes(&bytes[start..]);
+            start += triplet.len();
         }
+        let smp_count: u16 = BigEndian::read_u16(&triplet.value);
 
-        let smp_count: u16 = BigEndian::read_u16(value);
-        Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
+        triplet = Triplet::from_bytes(&bytes[start..]);
+        start += triplet.len();
+        let conf_rev: u32 = BigEndian::read_u32(&triplet.value);
 
-        let conf_rev: u32 = BigEndian::read_u32(value);
-        Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
-
+        triplet = Triplet::from_bytes(&bytes[start..]);
+        start += triplet.len();
         let mut refr_tm: Option<u64> = None;
-        if tag == 0x84 {
-            refr_tm = Some(BigEndian::read_u64(value));
-            Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
-        }
+        if triplet.tag == 0x84 {
+            refr_tm = Some(BigEndian::read_u64(&triplet.value));
 
-        let smp_sync: SampleSync = match value[0] {
+            triplet = Triplet::from_bytes(&bytes[start..]);
+            start += triplet.len();
+        }
+        let smp_sync: SampleSync = match triplet.value[0] {
             0 => SampleSync::Internal,
             1 => SampleSync::Local,
             2 => SampleSync::Global,
-            _ => panic!("Invalid SampleSync value: {}", value[0]),
+            _ => panic!("Invalid SampleSync value: {}", &triplet.value[0]),
         };
-        Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
 
+        triplet = Triplet::from_bytes(&bytes[start..]);
+        start += triplet.len();
         let mut smp_rate: Option<u16> = None;
-        if tag == 0x86 {
-            smp_rate = Some(BigEndian::read_u16(value));
-            Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
+        if triplet.tag == 0x86 {
+            smp_rate = Some(BigEndian::read_u16(&triplet.value));
+
+            triplet = Triplet::from_bytes(&bytes[start..]);
+            start += triplet.len();
         }
+        let measures = Phases::from_bytes(&triplet.value);
 
-        let measures = Phases::from_bytes(value);
-        Self::update(bytes, &mut start, &mut tag, &mut len, &mut value);
-
-        let mut smp_mode: Option<u16> = None;
-        if tag == 0x88 {
-            smp_mode = Some(BigEndian::read_u16(value));
+    let mut smp_mode: Option<u16> = None;
+        if start < bytes.len(){
+            triplet = Triplet::from_bytes(&bytes[start..]);
+            if triplet.tag == 0x88 {
+                smp_mode = Some(BigEndian::read_u16(&triplet.value));
+            }
         }
 
         Asdu { 
