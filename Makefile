@@ -1,8 +1,14 @@
+build:
+	cargo build
+
 release:
 	cargo build --release && sudo ./target/release/crabiec61850
 
-run:
-	cargo build && sudo ./target/debug/crabiec61850
+run: build
+	sudo ./target/debug/crabiec61850
+
+debug: build
+	sudo strace -e trace=network ./target/debug/crabiec61850
 
 test:
 	cargo test
