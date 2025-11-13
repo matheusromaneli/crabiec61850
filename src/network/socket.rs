@@ -4,7 +4,8 @@ use libc::{AF_PACKET, ARPHRD_LOOPBACK, SO_BINDTODEVICE, SOCK_RAW, SOL_SOCKET, ht
 pub struct RawSocket {
     pub sock: libc::c_int,
     pub iface: String,
-    pub protocol: i32
+    pub protocol: i32,
+    pub sockaddr: sockaddr_ll
 }
 
 impl RawSocket {
@@ -31,7 +32,18 @@ impl RawSocket {
             panic!("Failed to bind socket to interface: {}", std::io::Error::last_os_error());
         }
 
-        RawSocket { sock, iface: iface, protocol: eth_p }
+        let if_index = unsafe { if_nametoindex(iface.as_ptr() as *const libc::c_char) };
+        let sockaddr = sockaddr_ll {
+            sll_family: AF_PACKET as u16,
+            sll_protocol: eth_p as u16,
+            sll_ifindex: if_index as i32,
+            sll_hatype: ARPHRD_LOOPBACK as u16,
+            sll_pkttype: 0,
+            sll_halen: 6,
+            sll_addr: [0u8; 8],
+        };
+
+        RawSocket { sock, iface: iface, protocol: eth_p , sockaddr: sockaddr }
     }
 
     pub fn recv(&self) -> Vec<u8> {
@@ -43,33 +55,15 @@ impl RawSocket {
         buffer[..packet_size as usize].to_vec()
     }
 
-    pub fn send(&self, data: Vec<u8>) {
-        let mut sa_data = [0i8; 14];
-        for i in 0..14 {
-            sa_data[i] = data[i] as i8;
+    pub fn send(&self, data: &Vec<u8>) {
+        let mut sockaddr = self.sockaddr.clone();
+        for i in 0..6 {
+            sockaddr.sll_addr[i] = data[6+i];
         }
-        let if_index = unsafe { if_nametoindex(self.iface.as_ptr() as *const libc::c_char) };
-        let sockaddr = sockaddr_ll {
-            sll_family: AF_PACKET as u16,
-            sll_protocol: self.protocol as u16,
-            sll_ifindex: if_index as i32,
-            sll_hatype: ARPHRD_LOOPBACK as u16,
-            sll_pkttype: 0,
-            sll_halen: 6,
-            sll_addr: [
-                data[6],
-                data[7],
-                data[8],
-                data[9],
-                data[10],
-                data[11],
-                0, 0,
-            ],
-        };
         let result = unsafe {
             sendto(
                 self.sock, data.as_ptr() as *const libc::c_void, data.len(), 0,
-                &sockaddr as *const libc::sockaddr_ll as *const libc::sockaddr,
+                &sockaddr as *const sockaddr_ll as *const libc::sockaddr,
                 std::mem::size_of_val(&sockaddr) as libc::socklen_t
             )
         };

@@ -1,10 +1,9 @@
-use libc::nanosleep;
 
-use crate::{network::{packet::Packet, socket::RawSocket}, protocols::{ethernet::model::Ethernet, sampled_values::model::SampledValue}};
+use crabiec61850::protocols::{ethernet::model::Ethernet, sampled_values::model::SampledValue};
+use criterion::{criterion_group, criterion_main, Criterion};
+use crabiec61850::network::packet::Packet;
 
-pub fn main() {
-    let socket = RawSocket::new("lo".to_string(), 0x88ba_u16);
-
+fn default_packet() -> Packet {
     let sv_bytes: &[u8] = &[
         0x40, 0x02, 0x00, 0x66, 0x00, 0x00, 0x00, 0x00, // Header
         0x60, 0x5c, // PDU
@@ -17,7 +16,8 @@ pub fn main() {
         0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
         0xff, 0xf6, 0x00, 0x00, 0x20, 0x00 // ASDU
     ];
-    let mut config = Packet {
+
+    Packet {
         ether_type: [0x88, 0xba],
         ethernet: Ethernet{
             dst_mac: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -25,20 +25,35 @@ pub fn main() {
             ether_type: [0x88, 0xba],
         },
         sampled_value: SampledValue::from_bytes(sv_bytes),
-    };
-    let time_between_packets = 208_333;
-    let time_next_perf = 16;
-    let time_to_bytes_perf = 900;
-    let time_send_perf = 18_000;
-    let unknown_time = 42_000;
-    let tm_spec = libc::timespec {
-        tv_sec: 0,
-        tv_nsec: time_between_packets - time_next_perf - time_to_bytes_perf - time_send_perf - unknown_time,
-    };
-
-    loop {
-        unsafe{ nanosleep(&tm_spec, core::ptr::null_mut()) };
-        socket.send(&config.to_bytes());
-        config.sampled_value.next();
     }
 }
+
+fn packet_benchmark(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Packet");
+
+    let mut packet = default_packet();
+    let packet_bytes = packet.to_bytes();
+
+    group.bench_function("Packet.to_bytes", |b| {
+        b.iter(|| {
+            packet.to_bytes();
+        });
+    });
+
+    group.bench_function("Packet.from_bytes", |b| {
+        b.iter(|| {
+            Packet::from_bytes(&packet_bytes);
+        });
+    });
+
+    group.bench_function("Packet.next", |b| {
+        b.iter(|| {
+            packet.sampled_value.next();
+        });
+    });
+
+    group.finish();
+}
+
+criterion_group!(benches, packet_benchmark);
+criterion_main!(benches);
