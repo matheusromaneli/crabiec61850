@@ -1,3 +1,5 @@
+use libc::nanosleep;
+
 use crate::{network::{packet::Packet, socket::RawSocket}, protocols::{ethernet::model::Ethernet, sampled_values::model::SampledValue}};
 
 pub fn main() {
@@ -25,7 +27,13 @@ pub fn main() {
         sampled_value: SampledValue::from_bytes(sv_bytes),
     };
 
+    let tm_spec = libc::timespec {
+        tv_sec: 0,
+        tv_nsec: 138_550,
+    };
+
     loop {
+        unsafe{ nanosleep(&tm_spec, core::ptr::null_mut()) };
         socket.send(config.to_bytes());
         config.sampled_value.next();
     }
