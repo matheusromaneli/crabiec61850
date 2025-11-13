@@ -30,7 +30,7 @@ pub fn main() {
     let time_next_perf = 16;
     let time_to_bytes_perf = 900;
     let time_send_perf = 18_000;
-    let unknown_time = 42_000;
+    let unknown_time = 42_550;
     let tm_spec = libc::timespec {
         tv_sec: 0,
         tv_nsec: time_between_packets - time_next_perf - time_to_bytes_perf - time_send_perf - unknown_time,

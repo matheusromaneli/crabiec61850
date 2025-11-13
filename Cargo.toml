@@ -13,3 +13,7 @@ criterion = "0.7.0"
 [[bench]]
 name = "packet"
 harness = false
+
+[[bench]]
+name = "nanosleep"
+harness = false
