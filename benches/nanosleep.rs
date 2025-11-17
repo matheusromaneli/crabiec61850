@@ -11,7 +11,7 @@ fn nanosleep_benchmark(c: &mut Criterion) {
         tv_nsec: 0,
     };
 
-    for i in [0, 10, 1_000, 10_000, 100_000, 200_000, 208_333]{
+    for i in [100_000, 200_000, 208_333]{
         rmtp.tv_nsec = i;
         group.bench_function(BenchmarkId::new("nanosleep", i), |b| {
             b.iter(|| {
