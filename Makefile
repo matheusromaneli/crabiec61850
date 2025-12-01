@@ -1,6 +1,11 @@
 build:
 	cargo build
 
+qa:
+	cargo test --quiet
+	cargo fmt --check
+ 	cargo clippy
+
 release:
 	cargo build --release && sudo ./target/release/crabiec61850
 
