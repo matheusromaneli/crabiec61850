@@ -2,6 +2,7 @@
 qa:
 	@ cargo test --quiet
 	@ cargo fmt --check
+	@ cargo clippy
 
 build:
 	cargo build
