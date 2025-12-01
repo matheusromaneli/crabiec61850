@@ -32,7 +32,12 @@ impl RawSocket {
             panic!("Failed to bind socket to interface: {}", std::io::Error::last_os_error());
         }
 
-        let if_index = unsafe { if_nametoindex(iface.as_ptr() as *const libc::c_char) };
+        let mut if_index = unsafe { if_nametoindex(iface.as_ptr() as *const libc::c_char) };
+        
+        if if_index == 0 {
+            println!("Interface {} not found, using loopback", iface);
+            if_index = 1;
+        }
         let sockaddr = sockaddr_ll {
             sll_family: AF_PACKET as u16,
             sll_protocol: eth_p as u16,

@@ -1,10 +1,9 @@
-use libc::nanosleep;
+use crabiec61850::network::packet::Packet;
+use criterion::{Criterion, criterion_group, criterion_main};
+use crabiec61850::network::socket::RawSocket;
+use crabiec61850::protocols::{ethernet::model::Ethernet, sampled_values::model::SampledValue};
 
-use crate::{network::{packet::Packet, socket::RawSocket}, protocols::{ethernet::model::Ethernet, sampled_values::model::SampledValue}};
-
-pub fn main() {
-    let socket = RawSocket::new("lo".to_string(), 0x88ba_u16);
-
+fn default_packet() -> Packet {
     let sv_bytes: &[u8] = &[
         0x40, 0x02, 0x00, 0x66, 0x00, 0x00, 0x00, 0x00, // Header
         0x60, 0x5c, // PDU
@@ -17,7 +16,8 @@ pub fn main() {
         0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
         0xff, 0xf6, 0x00, 0x00, 0x20, 0x00 // ASDU
     ];
-    let mut config = Packet {
+
+    Packet {
         ether_type: [0x88, 0xba],
         ethernet: Ethernet{
             dst_mac: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -25,20 +25,22 @@ pub fn main() {
             ether_type: [0x88, 0xba],
         },
         sampled_value: SampledValue::from_bytes(sv_bytes),
-    };
-    let time_between_packets = 208_333;
-    let time_next_perf = 16;
-    let time_to_bytes_perf = 909;
-    let time_send_perf = 1_500;
-    let precision_diff_time = 55_750;
-    let tm_spec = libc::timespec {
-        tv_sec: 0,
-        tv_nsec: time_between_packets - time_next_perf - time_to_bytes_perf - time_send_perf - precision_diff_time,
-    };
-
-    loop {
-        unsafe{ nanosleep(&tm_spec, core::ptr::null_mut()) };
-        socket.send(&config.to_bytes());
-        config.sampled_value.next();
     }
 }
+
+fn socket_benchmark(c: &mut Criterion) {
+    let mut group = c.benchmark_group("socket");
+    let packet = default_packet();
+    let packet_bytes = packet.to_bytes();
+    let socket = RawSocket::new("lo".to_string(), 0x88ba_u16);
+    group.bench_function("socket.send", |b| {
+        b.iter(|| {
+            std::hint::black_box(socket.send(&packet_bytes));
+        });
+    });
+
+    group.finish();
+}
+
+criterion_group!(benches, socket_benchmark);
+criterion_main!(benches);
