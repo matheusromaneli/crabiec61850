@@ -51,7 +51,7 @@ impl RawSocket {
             sll_family: AF_PACKET as u16,
             sll_protocol: eth_p as u16,
             sll_ifindex: if_index as i32,
-            sll_hatype: ARPHRD_LOOPBACK as u16,
+            sll_hatype: ARPHRD_LOOPBACK,
             sll_pkttype: 0,
             sll_halen: 6,
             sll_addr: [0u8; 8],
@@ -59,9 +59,9 @@ impl RawSocket {
 
         RawSocket {
             sock,
-            iface: iface,
+            iface,
             protocol: eth_p,
-            sockaddr: sockaddr,
+            sockaddr,
         }
     }
 
@@ -84,11 +84,9 @@ impl RawSocket {
         buffer[..packet_size as usize].to_vec()
     }
 
-    pub fn send(&self, data: &Vec<u8>) {
-        let mut sockaddr = self.sockaddr.clone();
-        for i in 0..6 {
-            sockaddr.sll_addr[i] = data[6 + i];
-        }
+    pub fn send(&self, data: &[u8]) {
+        let mut sockaddr = self.sockaddr;
+        sockaddr.sll_addr[..6].copy_from_slice(&data[6..(6 + 6)]);
         let result = unsafe {
             sendto(
                 self.sock,

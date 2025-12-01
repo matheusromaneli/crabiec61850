@@ -7,32 +7,32 @@ use byteorder::{BigEndian, ByteOrder};
 impl Asdu {
     pub fn from_bytes(bytes: &[u8]) -> Asdu {
         let mut triplet = Triplet::from_bytes(bytes);
-        let mut start: usize = triplet.len();
+        let mut start: usize = triplet.length();
         let sv_id = String::from_utf8(triplet.value.to_vec()).unwrap();
 
         triplet = Triplet::from_bytes(&bytes[start..]);
-        start += triplet.len();
+        start += triplet.length();
         let mut dataset: Option<String> = None;
         if triplet.tag == 0x81 {
             dataset = Some(String::from_utf8(triplet.value.to_vec()).unwrap());
 
             triplet = Triplet::from_bytes(&bytes[start..]);
-            start += triplet.len();
+            start += triplet.length();
         }
         let smp_count: u16 = BigEndian::read_u16(&triplet.value);
 
         triplet = Triplet::from_bytes(&bytes[start..]);
-        start += triplet.len();
+        start += triplet.length();
         let conf_rev: u32 = BigEndian::read_u32(&triplet.value);
 
         triplet = Triplet::from_bytes(&bytes[start..]);
-        start += triplet.len();
+        start += triplet.length();
         let mut refr_tm: Option<u64> = None;
         if triplet.tag == 0x84 {
             refr_tm = Some(BigEndian::read_u64(&triplet.value));
 
             triplet = Triplet::from_bytes(&bytes[start..]);
-            start += triplet.len();
+            start += triplet.length();
         }
         let smp_sync: SampleSync = match triplet.value[0] {
             0 => SampleSync::Internal,
@@ -42,13 +42,13 @@ impl Asdu {
         };
 
         triplet = Triplet::from_bytes(&bytes[start..]);
-        start += triplet.len();
+        start += triplet.length();
         let mut smp_rate: Option<u16> = None;
         if triplet.tag == 0x86 {
             smp_rate = Some(BigEndian::read_u16(&triplet.value));
 
             triplet = Triplet::from_bytes(&bytes[start..]);
-            start += triplet.len();
+            start += triplet.length();
         }
         let measures = Phases::from_bytes(&triplet.value);
 
@@ -61,15 +61,15 @@ impl Asdu {
         }
 
         Asdu {
-            sv_id: sv_id,
-            dataset: dataset,
-            smp_count: smp_count,
-            conf_rev: conf_rev,
-            refr_tm: refr_tm,
-            smp_sync: smp_sync,
-            smp_rate: smp_rate,
-            measures: measures,
-            smp_mode: smp_mode,
+            sv_id,
+            dataset,
+            smp_count,
+            conf_rev,
+            refr_tm,
+            smp_sync,
+            smp_rate,
+            measures,
+            smp_mode,
         }
     }
 
@@ -119,17 +119,12 @@ impl Asdu {
     }
 
     fn smp_sync_to_bytes(smp_sync: u8) -> Vec<u8> {
-        let mut bytes: Vec<u8> = vec![];
-        bytes.push(ASDUTags::SmpSync as u8);
-        bytes.push(1);
-        bytes.push(smp_sync);
+        let bytes: Vec<u8> = vec![ASDUTags::SmpSync as u8, 1, smp_sync];
         bytes
     }
 
     fn smp_rate_to_bytes(smp_rate: u16) -> Vec<u8> {
-        let mut bytes: Vec<u8> = vec![];
-        bytes.push(ASDUTags::SmpRate as u8);
-        bytes.push(2);
+        let mut bytes: Vec<u8> = vec![ASDUTags::SmpRate as u8, 2];
         BigEndian::write_u16(&mut bytes[2..], smp_rate);
         bytes
     }
@@ -191,20 +186,20 @@ impl Asdu {
 
         let sample_point: f64 = (self.smp_count % 80) as f64;
 
-        let angle_a: f64 = sample_point * (2 as f64 * std::f64::consts::PI / 80 as f64);
-        let angle_b: f64 = sample_point * (2 as f64 * std::f64::consts::PI / 80 as f64);
-        let angle_c: f64 = sample_point * (2 as f64 * std::f64::consts::PI / 80 as f64);
+        let angle_a: f64 = sample_point * (2_f64 * std::f64::consts::PI / 80_f64);
+        let angle_b: f64 = sample_point * (2_f64 * std::f64::consts::PI / 80_f64);
+        let angle_c: f64 = sample_point * (2_f64 * std::f64::consts::PI / 80_f64);
 
-        self.measures.current.a.value = (amp * (angle_a - phase_angle).sin() * 1000 as f64) as i32;
-        self.measures.current.b.value = (amp * (angle_b - phase_angle).sin() * 1000 as f64) as i32;
-        self.measures.current.c.value = (amp * (angle_c - phase_angle).sin() * 1000 as f64) as i32;
+        self.measures.current.a.value = (amp * (angle_a - phase_angle).sin() * 1000_f64) as i32;
+        self.measures.current.b.value = (amp * (angle_b - phase_angle).sin() * 1000_f64) as i32;
+        self.measures.current.c.value = (amp * (angle_c - phase_angle).sin() * 1000_f64) as i32;
         self.measures.current.n.value = self.measures.current.a.value
             + self.measures.current.b.value
             + self.measures.current.c.value;
 
-        self.measures.voltage.a.value = (vol * angle_a.sin() * 100 as f64) as i32;
-        self.measures.voltage.b.value = (vol * angle_b.sin() * 100 as f64) as i32;
-        self.measures.voltage.c.value = (vol * angle_c.sin() * 100 as f64) as i32;
+        self.measures.voltage.a.value = (vol * angle_a.sin() * 100_f64) as i32;
+        self.measures.voltage.b.value = (vol * angle_b.sin() * 100_f64) as i32;
+        self.measures.voltage.c.value = (vol * angle_c.sin() * 100_f64) as i32;
         self.measures.voltage.n.value = self.measures.voltage.a.value
             + self.measures.voltage.b.value
             + self.measures.voltage.c.value;

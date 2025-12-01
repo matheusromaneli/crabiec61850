@@ -6,7 +6,7 @@ impl SampledValue {
     pub fn from_bytes(bytes: &[u8]) -> SampledValue {
         let sav_pdu_triplet = Triplet::from_bytes(&bytes[8..]);
         let no_asdu_triplet = Triplet::from_bytes(&sav_pdu_triplet.value);
-        let seq_asdu_triplet = Triplet::from_bytes(&sav_pdu_triplet.value[no_asdu_triplet.len()..]);
+        let seq_asdu_triplet = Triplet::from_bytes(&sav_pdu_triplet.value[no_asdu_triplet.length()..]);
 
         let number_of_asdu = BigEndian::read_int(
             &no_asdu_triplet.value,
@@ -22,7 +22,7 @@ impl SampledValue {
             }
             let asdu = Asdu::from_bytes(&asdu_triplet.value);
             asdus.push(asdu);
-            asdu_start += asdu_triplet.len();
+            asdu_start += asdu_triplet.length();
         }
         SampledValue {
             app_id: BigEndian::read_u16(&bytes[0..2]),
@@ -30,7 +30,7 @@ impl SampledValue {
             simulation: bytes[4] >> 3 == 1,
             reserved1: [bytes[4], bytes[5]],
             reserved2: [bytes[6], bytes[7]],
-            number_of_asdu: number_of_asdu,
+            number_of_asdu,
             asdu: asdus,
         }
     }

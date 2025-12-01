@@ -14,17 +14,17 @@ impl Triplet {
         } else if length < 0x82 {
             bytes[0] as usize
         } else if length < 0x83 {
-            BigEndian::read_u16(&bytes) as usize
+            BigEndian::read_u16(bytes) as usize
         } else if length < 0x84 {
-            BigEndian::read_u24(&bytes) as usize
+            BigEndian::read_u24(bytes) as usize
         } else if length < 0x85 {
-            BigEndian::read_u32(&bytes) as usize
+            BigEndian::read_u32(bytes) as usize
         } else {
             panic!("ASN.1 length too long {}", length);
         }
     }
 
-    pub fn len(&self) -> usize {
+    pub fn length(&self) -> usize {
         2 + self.extended_length as usize + self.value.len()
     }
 
@@ -93,12 +93,11 @@ impl Triplet {
     pub fn from_bytes(bytes: &[u8]) -> Triplet {
         let tag = bytes[0];
 
-        let extended_length: u8;
-        if bytes[1] > 0x80 {
-            extended_length = bytes[1] & 0x0F; // 0x8X where X is the length
+        let extended_length: u8 = if bytes[1] > 0x80 {
+            bytes[1] & 0x0F // 0x8X where X is the length
         } else {
-            extended_length = 0u8;
-        }
+            0u8
+        };
 
         let length = Self::extract_length(bytes[1], &bytes[2..6]);
         let start_value = 2 + extended_length as usize;
@@ -123,7 +122,7 @@ mod tests {
         assert_eq!(result.tag, 0x80);
         assert_eq!(result.length, 4);
         assert_eq!(result.value, vec![0x34, 0x30, 0x30, 0x30]);
-        assert_eq!(result.len(), 6);
+        assert_eq!(result.length(), 6);
         assert_eq!(result.extended_length, 0);
     }
 
@@ -148,7 +147,7 @@ mod tests {
         assert_eq!(result.tag, 0xa2);
         assert_eq!(result.length, 0xae as usize);
         assert_eq!(result.value, bytes[3..]);
-        assert_eq!(result.len(), 177);
+        assert_eq!(result.length(), 177);
         assert_eq!(result.extended_length, 1);
     }
 
@@ -158,7 +157,7 @@ mod tests {
         assert_eq!(triplet.tag, 0x80);
         assert_eq!(triplet.length, 4);
         assert_eq!(triplet.value, vec![0x34, 0x30, 0x30, 0x30]);
-        assert_eq!(triplet.len(), 6);
+        assert_eq!(triplet.length(), 6);
         assert_eq!(triplet.extended_length, 0);
     }
 
@@ -188,7 +187,7 @@ mod tests {
         assert_eq!(triplet.tag, 0xa2);
         assert_eq!(triplet.length, 0xae as usize);
         assert_eq!(triplet.value, bytes);
-        assert_eq!(triplet.len(), 177);
+        assert_eq!(triplet.length(), 177);
         assert_eq!(triplet.extended_length, 1);
     }
 }
