@@ -6,7 +6,8 @@ impl SampledValue {
     pub fn from_bytes(bytes: &[u8]) -> SampledValue {
         let sav_pdu_triplet = Triplet::from_bytes(&bytes[8..]);
         let no_asdu_triplet = Triplet::from_bytes(&sav_pdu_triplet.value);
-        let seq_asdu_triplet = Triplet::from_bytes(&sav_pdu_triplet.value[no_asdu_triplet.length()..]);
+        let seq_asdu_triplet =
+            Triplet::from_bytes(&sav_pdu_triplet.value[no_asdu_triplet.length()..]);
 
         let number_of_asdu = BigEndian::read_int(
             &no_asdu_triplet.value,
