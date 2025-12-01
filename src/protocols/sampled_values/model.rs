@@ -21,7 +21,7 @@ pub enum ASDUTags {
 
 #[repr(u8)]
 #[derive(PartialEq, Debug, Copy, Clone)]
-pub enum SampleSync{
+pub enum SampleSync {
     /*
     Sampled values synchronization source.
     See IEC 61850-7-2.
@@ -52,7 +52,7 @@ pub struct Phases {
 }
 
 #[derive(PartialEq, Debug)]
-pub struct Asdu{
+pub struct Asdu {
     pub sv_id: String,
     pub dataset: Option<String>,
     pub smp_count: u16,
@@ -64,14 +64,13 @@ pub struct Asdu{
     pub smp_mode: Option<u16>,
 }
 
-
 #[derive(PartialEq, Debug)]
-pub struct SampledValue{
+pub struct SampledValue {
     pub app_id: u16,
     pub length: u16,
     pub simulation: bool,
-    pub reserved1: [u8;2],
-    pub reserved2: [u8;2],
+    pub reserved1: [u8; 2],
+    pub reserved2: [u8; 2],
     pub number_of_asdu: u32,
-    pub asdu: Vec<Asdu>
+    pub asdu: Vec<Asdu>,
 }

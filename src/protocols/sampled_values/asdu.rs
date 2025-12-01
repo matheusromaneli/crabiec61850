@@ -1,8 +1,10 @@
+use crate::{
+    protocols::sampled_values::model::{ASDUTags, Asdu, Phases, SampleSync},
+    standards::asn1::Triplet,
+};
 use byteorder::{BigEndian, ByteOrder};
-use crate::{protocols::sampled_values::model::{ASDUTags, Asdu, Phases, SampleSync}, standards::asn1::Triplet};
 
 impl Asdu {
-
     pub fn from_bytes(bytes: &[u8]) -> Asdu {
         let mut triplet = Triplet::from_bytes(bytes);
         let mut start: usize = triplet.len();
@@ -13,7 +15,7 @@ impl Asdu {
         let mut dataset: Option<String> = None;
         if triplet.tag == 0x81 {
             dataset = Some(String::from_utf8(triplet.value.to_vec()).unwrap());
-            
+
             triplet = Triplet::from_bytes(&bytes[start..]);
             start += triplet.len();
         }
@@ -50,15 +52,15 @@ impl Asdu {
         }
         let measures = Phases::from_bytes(&triplet.value);
 
-    let mut smp_mode: Option<u16> = None;
-        if start < bytes.len(){
+        let mut smp_mode: Option<u16> = None;
+        if start < bytes.len() {
             triplet = Triplet::from_bytes(&bytes[start..]);
             if triplet.tag == 0x88 {
                 smp_mode = Some(BigEndian::read_u16(&triplet.value));
             }
         }
 
-        Asdu { 
+        Asdu {
             sv_id: sv_id,
             dataset: dataset,
             smp_count: smp_count,
@@ -71,7 +73,7 @@ impl Asdu {
         }
     }
 
-    fn sv_id_to_bytes(sv_id: &str) -> Vec<u8>{
+    fn sv_id_to_bytes(sv_id: &str) -> Vec<u8> {
         let mut bytes: Vec<u8> = vec![];
         bytes.push(ASDUTags::SvId as u8);
         let sv_id_bytes = sv_id.as_bytes();
@@ -80,7 +82,7 @@ impl Asdu {
         bytes
     }
 
-    fn dataset_to_bytes(dataset: &str) -> Vec<u8>{
+    fn dataset_to_bytes(dataset: &str) -> Vec<u8> {
         let mut bytes: Vec<u8> = vec![];
         bytes.push(ASDUTags::Dataset as u8);
         let dataset_bytes = dataset.as_bytes();
@@ -89,7 +91,7 @@ impl Asdu {
         bytes
     }
 
-    fn smp_count_to_bytes(smp_count: u16) -> Vec<u8>{
+    fn smp_count_to_bytes(smp_count: u16) -> Vec<u8> {
         let mut bytes: Vec<u8> = vec![];
         bytes.push(ASDUTags::SmpCount as u8);
         bytes.push(2);
@@ -98,7 +100,7 @@ impl Asdu {
         bytes
     }
 
-    fn conf_rev_to_bytes(conf_rev: u32) -> Vec<u8>{
+    fn conf_rev_to_bytes(conf_rev: u32) -> Vec<u8> {
         let mut bytes: Vec<u8> = vec![];
         bytes.push(ASDUTags::ConfRev as u8);
         bytes.push(4);
@@ -107,7 +109,7 @@ impl Asdu {
         bytes
     }
 
-    fn refr_tm_to_bytes(refr_tm: u64) -> Vec<u8>{
+    fn refr_tm_to_bytes(refr_tm: u64) -> Vec<u8> {
         let mut bytes: Vec<u8> = vec![];
         bytes.push(ASDUTags::RefrTm as u8);
         bytes.push(8);
@@ -116,7 +118,7 @@ impl Asdu {
         bytes
     }
 
-    fn smp_sync_to_bytes(smp_sync: u8) -> Vec<u8>{
+    fn smp_sync_to_bytes(smp_sync: u8) -> Vec<u8> {
         let mut bytes: Vec<u8> = vec![];
         bytes.push(ASDUTags::SmpSync as u8);
         bytes.push(1);
@@ -124,7 +126,7 @@ impl Asdu {
         bytes
     }
 
-    fn smp_rate_to_bytes(smp_rate: u16) -> Vec<u8>{
+    fn smp_rate_to_bytes(smp_rate: u16) -> Vec<u8> {
         let mut bytes: Vec<u8> = vec![];
         bytes.push(ASDUTags::SmpRate as u8);
         bytes.push(2);
@@ -132,7 +134,7 @@ impl Asdu {
         bytes
     }
 
-    fn measures_to_bytes(measures: &Phases) -> Vec<u8>{
+    fn measures_to_bytes(measures: &Phases) -> Vec<u8> {
         let mut bytes: Vec<u8> = vec![];
         bytes.push(ASDUTags::Measures as u8);
         bytes.push(64);
@@ -140,7 +142,7 @@ impl Asdu {
         bytes
     }
 
-    fn smp_mode_to_bytes(smp_mode: u16) -> Vec<u8>{
+    fn smp_mode_to_bytes(smp_mode: u16) -> Vec<u8> {
         let mut bytes: Vec<u8> = vec![];
         bytes.push(ASDUTags::SmpMode as u8);
         bytes.push(2);
@@ -196,12 +198,16 @@ impl Asdu {
         self.measures.current.a.value = (amp * (angle_a - phase_angle).sin() * 1000 as f64) as i32;
         self.measures.current.b.value = (amp * (angle_b - phase_angle).sin() * 1000 as f64) as i32;
         self.measures.current.c.value = (amp * (angle_c - phase_angle).sin() * 1000 as f64) as i32;
-        self.measures.current.n.value = self.measures.current.a.value + self.measures.current.b.value + self.measures.current.c.value;
+        self.measures.current.n.value = self.measures.current.a.value
+            + self.measures.current.b.value
+            + self.measures.current.c.value;
 
         self.measures.voltage.a.value = (vol * angle_a.sin() * 100 as f64) as i32;
         self.measures.voltage.b.value = (vol * angle_b.sin() * 100 as f64) as i32;
         self.measures.voltage.c.value = (vol * angle_c.sin() * 100 as f64) as i32;
-        self.measures.voltage.n.value = self.measures.voltage.a.value + self.measures.voltage.b.value + self.measures.voltage.c.value;
+        self.measures.voltage.n.value = self.measures.voltage.a.value
+            + self.measures.voltage.b.value
+            + self.measures.voltage.c.value;
     }
 }
 
@@ -215,11 +221,12 @@ mod tests {
     fn decode_asdu() {
         let bytes: &[u8] = &[
             0x80, 0x04, 0x34, 0x30, 0x30, 0x30, 0x82, 0x02, 0x00, 0x00, 0x83, 0x04, 0x00, 0x00,
-            0x00, 0x01, 0x85, 0x01, 0x01, 0x87, 0x40, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x03, 0x00, 0x00, 0x20, 0x00, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff,
-            0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0xff,
-            0xff, 0xff, 0xf6, 0x00, 0x00, 0x20, 0x00,
+            0x00, 0x01, 0x85, 0x01, 0x01, 0x87, 0x40, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x20, 0x00, 0xff, 0xff, 0xff,
+            0xfd, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff,
+            0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xf6, 0x00, 0x00, 0x20,
+            0x00,
         ];
 
         let expected = Asdu {
@@ -230,7 +237,7 @@ mod tests {
             refr_tm: None,
             smp_sync: SampleSync::Local,
             smp_rate: None,
-            measures: Phases::from_bytes(&bytes[21..21+64]),
+            measures: Phases::from_bytes(&bytes[21..21 + 64]),
             smp_mode: None,
         };
 
@@ -239,55 +246,89 @@ mod tests {
 
     #[test]
     fn add_sv_id() {
-        assert_eq!(Asdu::sv_id_to_bytes("4000"), vec![0x80, 0x04, 0x34, 0x30, 0x30, 0x30]);
+        assert_eq!(
+            Asdu::sv_id_to_bytes("4000"),
+            vec![0x80, 0x04, 0x34, 0x30, 0x30, 0x30]
+        );
     }
 
     #[test]
     fn add_smp_count() {
         assert_eq!(Asdu::smp_count_to_bytes(0), vec![0x82, 0x02, 0x00, 0x00]);
     }
-    
+
     #[test]
     fn add_conf_rev() {
-        assert_eq!(Asdu::conf_rev_to_bytes(1), vec![0x83, 0x04, 0x00, 0x00, 0x00, 0x01]);
+        assert_eq!(
+            Asdu::conf_rev_to_bytes(1),
+            vec![0x83, 0x04, 0x00, 0x00, 0x00, 0x01]
+        );
     }
 
     #[test]
     fn add_smp_sync() {
-        assert_eq!(Asdu::smp_sync_to_bytes(SampleSync::Local as u8), vec![0x85, 0x01, 0x01]);
+        assert_eq!(
+            Asdu::smp_sync_to_bytes(SampleSync::Local as u8),
+            vec![0x85, 0x01, 0x01]
+        );
     }
 
     #[test]
     fn add_measures() {
         let measures = Phases {
             current: PhaseMeasures {
-                a: PhaseMeasurement{ value: 0, quality: 0},
-                b: PhaseMeasurement{ value: 0, quality: 0},
-                c: PhaseMeasurement{ value: 0, quality: 0},
-                n: PhaseMeasurement{ value: 0, quality: 0},
+                a: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                b: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                c: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                n: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
             },
             voltage: PhaseMeasures {
-                a: PhaseMeasurement{ value: 0, quality: 0},
-                b: PhaseMeasurement{ value: 0, quality: 0},
-                c: PhaseMeasurement{ value: 0, quality: 0},
-                n: PhaseMeasurement{ value: 0, quality: 0},
+                a: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                b: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                c: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                n: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
             },
         };
-        
+
         let mut expected: Vec<u8> = vec![0x87, 0x40];
         expected.append(&mut vec![0; 64]);
         assert_eq!(Asdu::measures_to_bytes(&measures), expected);
     }
 
     #[test]
-    fn asdu_to_bytes(){
+    fn asdu_to_bytes() {
         let bytes: &[u8] = &[
             0x80, 0x04, 0x34, 0x30, 0x30, 0x30, 0x82, 0x02, 0x00, 0x00, 0x83, 0x04, 0x00, 0x00,
-            0x00, 0x01, 0x85, 0x01, 0x01, 0x87, 0x40, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x03, 0x00, 0x00, 0x20, 0x00, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff,
-            0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0xff,
-            0xff, 0xff, 0xf6, 0x00, 0x00, 0x20, 0x00,
+            0x00, 0x01, 0x85, 0x01, 0x01, 0x87, 0x40, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x20, 0x00, 0xff, 0xff, 0xff,
+            0xfd, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff,
+            0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xf6, 0x00, 0x00, 0x20,
+            0x00,
         ];
 
         let object = Asdu::from_bytes(bytes);
@@ -295,8 +336,8 @@ mod tests {
     }
 
     #[test]
-    fn next_asdu(){
-        let mut current_asdu = Asdu{
+    fn next_asdu() {
+        let mut current_asdu = Asdu {
             sv_id: "4000".to_string(),
             dataset: None,
             smp_count: 0,
@@ -306,16 +347,40 @@ mod tests {
             smp_rate: None,
             measures: Phases {
                 current: PhaseMeasures {
-                    a: PhaseMeasurement{ value: 0, quality: 0},
-                    b: PhaseMeasurement{ value: 0, quality: 0},
-                    c: PhaseMeasurement{ value: 0, quality: 0},
-                    n: PhaseMeasurement{ value: 0, quality: 0},
+                    a: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
+                    b: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
+                    c: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
+                    n: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
                 },
                 voltage: PhaseMeasures {
-                    a: PhaseMeasurement{ value: 0, quality: 0},
-                    b: PhaseMeasurement{ value: 0, quality: 0},
-                    c: PhaseMeasurement{ value: 0, quality: 0},
-                    n: PhaseMeasurement{ value: 0, quality: 0},
+                    a: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
+                    b: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
+                    c: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
+                    n: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
                 },
             },
             smp_mode: None,
@@ -331,16 +396,40 @@ mod tests {
             smp_rate: None,
             measures: Phases {
                 current: PhaseMeasures {
-                    a: PhaseMeasurement{ value: 0, quality: 0},
-                    b: PhaseMeasurement{ value: 0, quality: 0},
-                    c: PhaseMeasurement{ value: 0, quality: 0},
-                    n: PhaseMeasurement{ value: 0, quality: 0},
+                    a: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
+                    b: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
+                    c: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
+                    n: PhaseMeasurement {
+                        value: 0,
+                        quality: 0,
+                    },
                 },
                 voltage: PhaseMeasures {
-                    a: PhaseMeasurement{ value: 235, quality: 0},
-                    b: PhaseMeasurement{ value: 235, quality: 0},
-                    c: PhaseMeasurement{ value: 235, quality: 0},
-                    n: PhaseMeasurement{ value: 705, quality: 0},
+                    a: PhaseMeasurement {
+                        value: 235,
+                        quality: 0,
+                    },
+                    b: PhaseMeasurement {
+                        value: 235,
+                        quality: 0,
+                    },
+                    c: PhaseMeasurement {
+                        value: 235,
+                        quality: 0,
+                    },
+                    n: PhaseMeasurement {
+                        value: 705,
+                        quality: 0,
+                    },
                 },
             },
             smp_mode: None,
@@ -348,5 +437,4 @@ mod tests {
         current_asdu.next();
         assert_eq!(current_asdu, expected_asdu_next);
     }
-
 }

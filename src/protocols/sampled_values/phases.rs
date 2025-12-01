@@ -2,7 +2,7 @@ use byteorder::{BigEndian, ByteOrder};
 
 use crate::protocols::sampled_values::model::{PhaseMeasurement, PhaseMeasures, Phases};
 
-impl PhaseMeasurement{
+impl PhaseMeasurement {
     pub fn from_bytes(bytes: &[u8]) -> PhaseMeasurement {
         if bytes.len() != 8 {
             panic!("PhaseMeasurement must be 8 bytes long");
@@ -69,9 +69,7 @@ mod tests {
 
     #[test]
     fn phase_measurement_from_bytes() {
-        let bytes: &[u8] = &[
-            0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00,
-        ];
+        let bytes: &[u8] = &[0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00];
         let phase_measurement = PhaseMeasurement::from_bytes(bytes);
         assert_eq!(phase_measurement.value, -3);
         assert_eq!(phase_measurement.quality, 0);
@@ -80,10 +78,9 @@ mod tests {
     #[test]
     fn phase_measures_from_bytes() {
         let bytes: &[u8] = &[
-            0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x20, 0x00,
+            0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+            0x00, 0x00, 0x20, 0x00,
         ];
 
         let phase_measures = PhaseMeasures::from_bytes(bytes);
@@ -100,14 +97,11 @@ mod tests {
     #[test]
     fn phases_from_bytes() {
         let bytes: &[u8] = &[
-            0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x20, 0x00,
-            0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00,
-            0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00,
-            0xff, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00,
-            0xff, 0xff, 0xff, 0xf6, 0x00, 0x00, 0x20, 0x00
+            0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+            0x00, 0x00, 0x20, 0x00, 0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
+            0xff, 0xfd, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00,
+            0xff, 0xff, 0xff, 0xf6, 0x00, 0x00, 0x20, 0x00,
         ];
 
         let phases = Phases::from_bytes(bytes);
@@ -127,12 +121,14 @@ mod tests {
         assert_eq!(phases.voltage.c.quality, 0);
         assert_eq!(phases.voltage.n.value, -10);
         assert_eq!(phases.voltage.n.quality, 0x00002000);
-        
     }
 
     #[test]
     fn phase_measurement_to_bytes() {
-        let phase_measurement = PhaseMeasurement { value: -3, quality: 0 };
+        let phase_measurement = PhaseMeasurement {
+            value: -3,
+            quality: 0,
+        };
         let bytes = phase_measurement.to_bytes();
         assert_eq!(bytes, vec![0xff, 0xff, 0xff, 0xfd, 0x00, 0x00, 0x00, 0x00]);
     }
@@ -140,10 +136,22 @@ mod tests {
     #[test]
     fn phase_measures_to_bytes() {
         let phase_measures = PhaseMeasures {
-            a: PhaseMeasurement{ value: 0, quality: 0},
-            b: PhaseMeasurement{ value: 0, quality: 0},
-            c: PhaseMeasurement{ value: 0, quality: 0},
-            n: PhaseMeasurement{ value: 0, quality: 0},
+            a: PhaseMeasurement {
+                value: 0,
+                quality: 0,
+            },
+            b: PhaseMeasurement {
+                value: 0,
+                quality: 0,
+            },
+            c: PhaseMeasurement {
+                value: 0,
+                quality: 0,
+            },
+            n: PhaseMeasurement {
+                value: 0,
+                quality: 0,
+            },
         };
         let bytes = phase_measures.to_bytes();
         assert_eq!(bytes, vec![0; 32]);
@@ -153,16 +161,40 @@ mod tests {
     fn phases_to_bytes() {
         let phases = Phases {
             current: PhaseMeasures {
-                a: PhaseMeasurement{ value: 0, quality: 0},
-                b: PhaseMeasurement{ value: 0, quality: 0},
-                c: PhaseMeasurement{ value: 0, quality: 0},
-                n: PhaseMeasurement{ value: 0, quality: 0},
+                a: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                b: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                c: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                n: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
             },
             voltage: PhaseMeasures {
-                a: PhaseMeasurement{ value: 0, quality: 0},
-                b: PhaseMeasurement{ value: 0, quality: 0},
-                c: PhaseMeasurement{ value: 0, quality: 0},
-                n: PhaseMeasurement{ value: 0, quality: 0},
+                a: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                b: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                c: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
+                n: PhaseMeasurement {
+                    value: 0,
+                    quality: 0,
+                },
             },
         };
         let bytes = phases.to_bytes();
