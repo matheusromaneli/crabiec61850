@@ -1,4 +1,6 @@
-use libc::nanosleep;
+use std::time::Instant;
+
+//use libc::nanosleep;
 
 use crate::{
     network::{packet::Packet, socket::RawSocket},
@@ -34,7 +36,7 @@ pub fn main() {
     let time_to_bytes_perf = 909;
     let time_send_perf = 1_500;
     let precision_diff_time = 55_750;
-    let tm_spec = libc::timespec {
+    let _tm_spec = libc::timespec {
         tv_sec: 0,
         tv_nsec: time_between_packets
             - time_next_perf
@@ -42,10 +44,27 @@ pub fn main() {
             - time_send_perf
             - precision_diff_time,
     };
+    let mut last = Instant::now();
+    let mut now = Instant::now();
+    let mut bytes = config.to_bytes();
+    let mut diff: i64;
 
     loop {
-        unsafe { nanosleep(&tm_spec, core::ptr::null_mut()) };
-        socket.send(&config.to_bytes());
-        config.sampled_value.next();
+        // sleep
+        // unsafe { nanosleep(&_tm_spec, core::ptr::null_mut()) }; // uncomment import nanosleep
+        // socket.send(&config.to_bytes());
+        // config.sampled_value.next();
+        // end sleep
+
+        // busy-wait
+        diff = now.duration_since(last).as_nanos() as i64;
+        if diff >= time_between_packets {
+            socket.send(&bytes);
+            last = now;
+            config.sampled_value.next();
+            bytes = config.to_bytes();
+        }
+        now = Instant::now();
+        // end busy-wait
     }
 }
