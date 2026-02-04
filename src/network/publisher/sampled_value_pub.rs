@@ -48,6 +48,8 @@ pub fn main() {
     let mut now = Instant::now();
     let mut bytes = config.to_bytes();
     let mut diff: i64;
+    let _time_sleep = time_between_packets - 2;
+    let mut compensation: i64 = 0;
 
     loop {
         // sleep
@@ -58,8 +60,12 @@ pub fn main() {
 
         // busy-wait
         diff = now.duration_since(last).as_nanos() as i64;
-        if diff >= time_between_packets {
+        if diff >= _time_sleep-compensation {
             socket.send(&bytes);
+            compensation = diff - _time_sleep;
+            if compensation < 0 {
+                compensation = 0;
+            }
             last = now;
             config.sampled_value.next();
             bytes = config.to_bytes();
