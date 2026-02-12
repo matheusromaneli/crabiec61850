@@ -44,7 +44,7 @@ impl RawSocket {
         let mut if_index = unsafe { if_nametoindex(iface.as_ptr() as *const libc::c_char) };
 
         if if_index == 0 {
-            println!("Interface {} not found, using loopback", iface);
+            println!("Interface {} not found, using loopback\nError: {}", iface, std::io::Error::last_os_error());
             if_index = 1;
         }
         let sockaddr = sockaddr_ll {

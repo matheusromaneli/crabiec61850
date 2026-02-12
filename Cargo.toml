@@ -18,6 +18,6 @@ harness = false
 name = "nanosleep"
 harness = false
 
-[[bench]]
+[[bench]] # Before compile turn harness to false
 name = "socket" # compiled = cargo bench socket --no-run
 harness = true # Run separetly with sudo <compiled> --bench
